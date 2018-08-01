@@ -91,7 +91,7 @@ double df(int i, int j){
 	double B = 6 * H + (T / Tm - 1) * L;
 	double C = 4 * H;
 
-	double diff_f = A * phiVal(i, j ) + B * pow( phiVal(i,j) , 2) + C * pow( phiVal(i,j) , 3);
+	double diff_f = A * phiVal(i, j ) + C * pow( phiVal(i,j) , 3);
 
 	return diff_f;
 };
@@ -117,7 +117,7 @@ void printPHI(){
 
 	for (int i = 0; i < N; i ++){
 		for (int j = 0; j < N; j ++){
-			myfile << *(ptrPHI + (i + N) + j);
+			myfile << *(ptrPHI + (i + N) + j) << " ";
 		}
 		myfile << endl;
 	}
