@@ -2,6 +2,7 @@
 #include <fstream>
 #include <math.h> /*pow*/
 #include <cstdlib>
+#include <chrono> //time of execution of program, want to scale with system size t^(1/2)
 
 using namespace std;
 
@@ -23,16 +24,24 @@ double dx, dy, dt;
 
 double T, Tm, H, L;
 
+std::ofstream myfile;
+
 
 /************************************* FUNCTIONS ***************************************************/
 
 //clear old data from output file
 void wipeOutput(){
-	std::ofstream ofs;
-	ofs.open("output.txt", std::ofstream::out | std::ofstream::trunc);
-	ofs.close();
+	myfile.open("output.txt", std::ofstream::out | std::ofstream::trunc);
+	myfile.close();
 
 };
+
+void writeConstantsToFile(int N, double dx, double dy){
+	
+	myfile.open ("output.txt", std::fstream::app);
+	myfile << N << " " << dx << " " << dy << " ";
+	myfile.close();
+}
 
 //gets values in the phi array
 double phiVal(int i, int j){
@@ -110,10 +119,8 @@ double timeMarch(int i, int j){
 
 //be careful not to print this array every time step. it will quickly fill up disk space
 void printPHI(){
-	ofstream myfile;
-	myfile.open ("output.txt", std::fstream::app);
 
-  	
+  	myfile.open ("output.txt", std::fstream::app);
 
 	for (int i = 0; i < N; i ++){
 		for (int j = 0; j < N; j ++){
@@ -137,7 +144,6 @@ int main(){
 
 	wipeOutput(); //ensure all old data is deleted from file.
 
-
 	//magnitude of timestep. should obey stability restriction delta_t <  (delta_x ^ 2) / 4
 	//restriction means that it is not possible to advance a solution explicity faster than the inherent diffusion
 	//time of the problem.
@@ -145,8 +151,8 @@ int main(){
 	dx = 1.1;
 	dy = dx; //for simplicity, not required. 
 
-	//assign value for N
-	N = 20;
+	//assign vaue for N
+	N = 90;
 
 	//other variables
 	T = 20; //the temperature, here considered a constant
@@ -155,7 +161,8 @@ int main(){
 	L = 5.0; //latent heat of fusion
 
 
-	//should print parameters and other info to top of the output file.
+	//start stopwatch
+	auto start = std::chrono::high_resolution_clock::now();
 
 	/********************************************
 			create phi array
@@ -214,7 +221,15 @@ int main(){
 
 	}
 
+	//stop stopwatch
+	auto finish = std::chrono::high_resolution_clock::now();
 
+	//should print parameters and other info to top of the output file.
+	writeConstantsToFile(N, dt, dx);
+
+	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
+        std::cout << microseconds.count() << "µs\n";
+        if (microseconds > std::chrono::seconds(1))
 
 
 	return 0;
