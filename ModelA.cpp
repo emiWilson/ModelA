@@ -1,8 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <math.h> /*pow*/
+#include <random>
 #include <cstdlib>
 #include <chrono> //time of execution of program, want to scale with system size t^(1/2)
+
 
 using namespace std;
 
@@ -11,18 +13,20 @@ using namespace std;
 /************************************ GLOBAL VARIABLES ******************************************/
 
 // N is the number of grid points in the numerical array. N = L / (delta_x), where L is the domain length in each direction
-int N;
+int N, T; //number of physical and temporal iterations
 
 
 //ptrPHI will be used to navigate the NxN phi array: phi[i][j] = *(ptr + (i * N) + j))
-double * ptrPHI;
+double * ptrPHI ;
 
 //this pointer will always point to the start of the PHI array and will remain unaltered. Can't make "const" variable type b/c don't know the phi array before the program starts. 
 double * begining_Of_PHI;
 
 double dx, dy, dt;
 
-double T, Tm, H, L;
+double dx_bar, dt_bar;
+
+double W, M;
 
 std::ofstream myfile;
 
@@ -52,10 +56,9 @@ double phiVal(int i, int j){
 };
 
 
-
 //evaluates the laplacian for phi(i,j). Eqn B.5 in Nik's book may be used as a more isotropic laplacian
 //for PERIODIC BOUNDARY CONDITIONS - right now doesn't deal with 0 nodes well...
-double Laplacian(int i, int j){
+double LaplacianA(int i, int j){
 
 	double laplacian_ij; 
 
@@ -86,6 +89,7 @@ double Laplacian(int i, int j){
 	return laplacian_ij;
 };
 
+
 /**
 function for the derivative of the the free energy with respect to the order parameter
 df/dPhi
@@ -96,21 +100,21 @@ should plot f(phi) with the values for the constants to see what it looks like.
 **/
 double df(int i, int j){
 
-	double A = 2 * H + 6 * (T / Tm - 1) * L ;
-	double B = 6 * H + (T / Tm - 1) * L;
-	double C = 4 * H;
+	double a = 1;
+	double a2 = -1;
+	double a4 = 1;
 
-	double diff_f = A * phiVal(i, j ) + C * pow( phiVal(i,j) , 3);
+	double diff_f = a +  ( a2 * pow( phiVal(i, j ) , 2) )/2 + ( a4 * pow( phiVal(i,j) , 4)) / 4 ; // + higher order terms - EQ 2.38 in book.
 
 	return diff_f;
 };
 
-//single time march.
+//single time march for a type A model
 //only stable for sufficiently small time steps (delta_t)
-double timeMarch(int i, int j){
+double timeMarchA(int i, int j){
 
-	double newPHI = phiVal(i,j) + (dt / pow(dx, 2)) * Laplacian(i , j)
-						- dt * df(i,j);
+	double newPHI = phiVal(i,j) + (dt_bar / pow(dx_bar, 2)) * LaplacianA(i , j)
+						- dt_bar * df(i,j);
 	
 	return newPHI;
 
@@ -147,18 +151,19 @@ int main(){
 	//magnitude of timestep. should obey stability restriction delta_t <  (delta_x ^ 2) / 4
 	//restriction means that it is not possible to advance a solution explicity faster than the inherent diffusion
 	//time of the problem.
-	dt = 0.05; // values given in Nik's 2007 paper
-	dx = 1.1;
+	dt = 0.1; // values given in Nik's 2007 paper
+	dx = 0.8;
 	dy = dx; //for simplicity, not required. 
 
 	//assign vaue for N
-	N = 90;
+	N = 20;
+	T = N;
 
 	//other variables
-	T = 20; //the temperature, here considered a constant
-	Tm = 50; //the melting temperature of the material
-	H = 4; //the nucleation barrier
-	L = 5.0; //latent heat of fusion
+	W = pow(0.25, 1/2);
+	M = 1; //lookup realistic value for M.
+	dt_bar = dt * M;
+	dx_bar = dx / W;
 
 
 	//start stopwatch
@@ -173,34 +178,19 @@ int main(){
 	ptrPHI = begining_Of_PHI;
 
 
-	/********************************************
-
-	create time array, will be filled with integers from 0 ... N-1
-	//same for x and y arrays
-
-	********************************************/
-	int t[N];
-	int x[N], y[N];
-
-	for (int i = 0; i < N; i ++){
-		t[i] = i;
-		x[i] = i;
-		y[i] = i;
-	}
 
 	/********************************************
 			Fill phi array
 	********************************************/
-	
-	srand (time(NULL));
-	double seed;
+
+	std::default_random_engine generator;
+  	std::normal_distribution<double> distribution(0.0, 0.001); // 0 mean and 0.001 standard deviation
 
 	for (int i = 0; i < N ; i ++){
 		for (int j = 0; j < N; j ++){
 			//phi[i][j] = (double) (i + 1) * (j + 1) ;
-			seed = ((double)rand()) / ((double)RAND_MAX) * 1.0;
-			//fill phi array with random 1s and 0s
-			phi[i][j] = seed	;	
+			phi[i][j] = distribution(generator);
+			
 		}
 	}
 
@@ -210,11 +200,11 @@ int main(){
 
 		for (int i = 0; i < N; i ++){
 			for (int j = 0; j < N ; j ++){
-				phi[i][j] = timeMarch(i,j);
+				phi[i][j] = timeMarchA(i,j);
 			}
 		}
 
-		//print phi array for every 10th
+		//print phi array for every 10th timestep
 		if( timestep % 10 == 0 ){
 			printPHI();
 		}
