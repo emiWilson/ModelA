@@ -40,10 +40,10 @@ void wipeOutput(){
 
 };
 
-void writeConstantsToFile(int N, double dx, double dy){
+void writeConstantsToFile(int N, int T, double dx){
 	
 	myfile.open ("output.txt", std::fstream::app);
-	myfile << N << " " << dx << " " << dy << " ";
+	myfile << N << " " << T << " " << dx ;
 	myfile.close();
 }
 
@@ -67,23 +67,27 @@ double LaplacianA(int i, int j){
 	int left = j + 1;
 	int right = j - 1;
 
+	//cout << "laplacian loop" << phiVal(0,0);
+
 	//periodic boundary conditions
 	if (i == 0){
-		below = N;
+		below = 0;
 	}
-	if (i == N){
+	if (i == N - 1){
 		above = 0;
 	}
 	if (j == 0){
-		right = N;
+		right = 0;
 	}
-	if (j == N){
+	if (j == N - 1){
 		left = 0;
 	}
 
 	laplacian_ij = phiVal( above, j) + phiVal( below, j)
 			+ phiVal( i, left ) + phiVal(i, right) 
 			- 4 * ( phiVal(i,j) );
+	//cout << " " << phiVal( above, j) << " " << phiVal(below, j)
+	//		<< " " << phiVal( i, left ) << " " << phiVal(i, right) << " ij is " << i << " " << j << endl;
 	
 	return laplacian_ij;
 };
@@ -99,11 +103,11 @@ should plot f(phi) with the values for the constants to see what it looks like.
 **/
 double df(int i, int j){
 
-	double a = 0;
 	double a2 = -1;
 	double a4 = 1;
 
-	double diff_f = a +  ( a2 * pow( phiVal(i, j ) , 2) )/2 + ( a4 * pow( phiVal(i,j) , 4)) / 4 ; // + higher order terms - EQ 2.38 in book.
+
+	double diff_f = a2 * phiVal(i, j) + a4 * pow( phiVal(i,j) , 3) ; // + higher order terms - EQ 2.38 in book.
 
 	return diff_f;
 };
@@ -114,6 +118,8 @@ double timeMarchA(int i, int j){
 
 	double newPHI = phiVal(i,j) + (dt_bar / pow(dx_bar, 2)) * LaplacianA(i , j)
 						- dt_bar * df(i,j);
+
+	//cout << newPHI << " from " << phiVal(i,j) << endl;
 	
 	return newPHI;
 
@@ -152,11 +158,10 @@ int main(){
 	//time of the problem.
 	dt = 0.1; 
 	dx = 0.8;
-	dy = dx; //for simplicity, not required. 
 
 	//assign vaue for N
-	N = 20;
-	T = 200;
+	N = 1000;
+	T = 500; //make sure T is a multiple of 10 to make timesteps are good.
 
 	//other variables
 	W = pow(0.25, 1/2);
@@ -184,7 +189,7 @@ int main(){
 
 	std::default_random_engine generator;
   	std::normal_distribution<double> distribution(0.0, 0.001); // 0 mean and 0.001 standard deviation
-
+	
 	for (int i = 0; i < N ; i ++){
 		for (int j = 0; j < N; j ++){
 			//phi[i][j] = (double) (i + 1) * (j + 1) ;
@@ -195,6 +200,7 @@ int main(){
 
 	printPHI();
 
+	int ith = 10;
 	for(int timestep = 0; timestep < T; timestep++){
 
 		for (int i = 0; i < N; i ++){
@@ -204,7 +210,7 @@ int main(){
 		}
 
 		//print phi array for every 10th timestep
-		if( timestep % 10 == 0 ){
+		if( timestep % ith == 0 ){
 			printPHI();
 		}
 
@@ -214,12 +220,11 @@ int main(){
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	//should print parameters and other info to top of the output file.
-	writeConstantsToFile(N, dt, dx);
+	writeConstantsToFile(N, T / ith, dt);
 
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
         std::cout << microseconds.count() << "µs\n";
         if (microseconds > std::chrono::seconds(1))
 
-    cout << phiVal(N - 1, N - 1) << "HH" << endl;
 	return 0;
 }
