@@ -4,7 +4,7 @@
 #include <random>
 #include <cstdlib>
 #include <chrono> //time of execution of program, want to scale with system size t^(1/2)
-
+ //PROBLEM MAY BE IN INDEXING.
 
 using namespace std;
 
@@ -85,7 +85,6 @@ double LaplacianA(int i, int j){
 			+ phiVal( i, left ) + phiVal(i, right) 
 			- 4 * ( phiVal(i,j) );
 	
-
 	return laplacian_ij;
 };
 
@@ -100,7 +99,7 @@ should plot f(phi) with the values for the constants to see what it looks like.
 **/
 double df(int i, int j){
 
-	double a = 1;
+	double a = 0;
 	double a2 = -1;
 	double a4 = 1;
 
@@ -151,13 +150,13 @@ int main(){
 	//magnitude of timestep. should obey stability restriction delta_t <  (delta_x ^ 2) / 4
 	//restriction means that it is not possible to advance a solution explicity faster than the inherent diffusion
 	//time of the problem.
-	dt = 0.1; // values given in Nik's 2007 paper
+	dt = 0.1; 
 	dx = 0.8;
 	dy = dx; //for simplicity, not required. 
 
 	//assign vaue for N
 	N = 20;
-	T = N;
+	T = 200;
 
 	//other variables
 	W = pow(0.25, 1/2);
@@ -196,7 +195,7 @@ int main(){
 
 	printPHI();
 
-	for(int timestep = 0; timestep < N * N; timestep++){
+	for(int timestep = 0; timestep < T; timestep++){
 
 		for (int i = 0; i < N; i ++){
 			for (int j = 0; j < N ; j ++){
@@ -221,6 +220,6 @@ int main(){
         std::cout << microseconds.count() << "µs\n";
         if (microseconds > std::chrono::seconds(1))
 
-
+    cout << phiVal(N - 1, N - 1) << "HH" << endl;
 	return 0;
 }
