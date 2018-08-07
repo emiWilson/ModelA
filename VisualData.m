@@ -37,10 +37,24 @@ end
 
 for(k = 1:T)
     figure 
-    imshow(d{k,1},'InitialMagnification', 5000, 'DisplayRange',[-0.005 0.005]);
+    imshow(d{k,1},'InitialMagnification', 200, 'DisplayRange',[-0.005 0.005]);
 end
-%for i = 1:N;
- %   imshow(d{N})
-  %  pause(.001);
+
+%for(k = 1:T)
+   % figure
+   % fname = sprintf('myfile%d.jpg', k);
+   % s = imshow(d{k,1},'InitialMagnification', 100, 'DisplayRange',[-0.005 0.005]);
+   % t = sprintf('dx=%0.2d, dt=%d, N=%d, T=%d', dx, 5, N, T);
+   % title(t)
+   % saveas(s,fname);
+    
+  
+    
+
+
 %end
+
+%figure
+%imshow(d{1,1},'InitialMagnification', 100, 'DisplayRange',[-0.005 0.005]);
+
 

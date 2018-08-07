@@ -40,10 +40,10 @@ void wipeOutput(){
 
 };
 
-void writeConstantsToFile(int N, int T, double dx){
+void writeConstantsToFile(int N, int T, double dt, double dx){
 	
 	myfile.open ("output.txt", std::fstream::app);
-	myfile << N << " " << T << " " << dx ;
+	myfile << N << " " << T << " " << dt << dx;
 	myfile.close();
 }
 
@@ -158,7 +158,7 @@ int main(){
 	//restriction means that it is not possible to advance a solution explicity faster than the inherent diffusion
 	//time of the problem.
 	dt = 0.1; 
-	dx = 0.8;
+	dx = 5;
 
 	//assign vaue for N
 	N = 400;
@@ -224,7 +224,7 @@ int main(){
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	//should print parameters and other info to top of the output file.
-	writeConstantsToFile(N, T/ith, dt);
+	writeConstantsToFile(N, T/ith, dt, dx);
 
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
         std::cout << microseconds.count() << "µs\n";
