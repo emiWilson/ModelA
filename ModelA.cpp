@@ -101,6 +101,7 @@ f(phi) will give a double well potential where the two minima correspond to the 
 
 should plot f(phi) with the values for the constants to see what it looks like.
 **/
+
 double df(int i, int j){
 
 	double a2 = -1;
@@ -133,7 +134,7 @@ void printPHI(){
 
 	for (int i = 0; i < N; i ++){
 		for (int j = 0; j < N; j ++){
-			myfile << *(ptrPHI + (i + N) + j) << " ";
+			myfile << phiVal(i,j) << " ";
 		}
 		myfile << endl;
 	}
@@ -160,8 +161,8 @@ int main(){
 	dx = 0.8;
 
 	//assign vaue for N
-	N = 1000;
-	T = 500; //make sure T is a multiple of 10 to make timesteps are good.
+	N = 400;
+	T = 100; //make sure T is a multiple of 10 to make timesteps are good.
 
 	//other variables
 	W = pow(0.25, 1/2);
@@ -187,18 +188,21 @@ int main(){
 			Fill phi array
 	********************************************/
 
-	std::default_random_engine generator;
-  	std::normal_distribution<double> distribution(0.0, 0.001); // 0 mean and 0.001 standard deviation
-	
+	std::default_random_engine de(time(0));
+  	std::normal_distribution<double> distribution(0, 0.001); // 0 mean and 0.001 standard deviation
+	srand((unsigned)time(NULL));
 	for (int i = 0; i < N ; i ++){
 		for (int j = 0; j < N; j ++){
 			//phi[i][j] = (double) (i + 1) * (j + 1) ;
-			phi[i][j] = distribution(generator);
+			phi[i][j] = distribution(de);
+
 			
 		}
 	}
+	
 
 	printPHI();
+
 
 	int ith = 10;
 	for(int timestep = 0; timestep < T; timestep++){
@@ -214,13 +218,13 @@ int main(){
 			printPHI();
 		}
 
-	}
+	} 
 
 	//stop stopwatch
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	//should print parameters and other info to top of the output file.
-	writeConstantsToFile(N, T / ith, dt);
+	writeConstantsToFile(N, T/ith, dt);
 
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
         std::cout << microseconds.count() << "µs\n";
