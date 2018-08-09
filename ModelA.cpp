@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <math.h> /*pow*/
 #include <random>
 #include <cstdlib>
@@ -28,6 +29,8 @@ double dx_bar, dt_bar;
 
 double W, M;
 
+int above_ij, below_ij, left_ij, right_ij; //stand for above, below, left, right
+
 std::ofstream myfile;
 
 
@@ -40,10 +43,10 @@ void wipeOutput(){
 
 };
 
-void writeConstantsToFile(int N, int T, double dt, double dx){
+void writeConstantsToFile(int T, int N, int T_print, double dt, double dx){
 	
 	myfile.open ("output.txt", std::fstream::app);
-	myfile << N << " " << T << " " << dt << dx;
+	myfile << T << " " << N << " " << T_print << " " << dt << dx;
 	myfile.close();
 }
 
@@ -55,36 +58,41 @@ double phiVal(int i, int j){
 
 };
 
-
-//evaluates the laplacian for phi(i,j). Eqn B.5 in Nik's book may be used as a more isotropic laplacian
-//for PERIODIC BOUNDARY CONDITIONS - right now doesn't deal with 0 nodes well...
-double LaplacianA(int i, int j){
-
-	double laplacian_ij; 
-
-	int above = i + 1;
-	int below = i - 1;
-	int left = j + 1;
-	int right = j - 1;
+void periodic_BC(int i, int j){
+	above_ij = i + 1;
+	below_ij = i - 1;
+	left_ij = j + 1;
+	right_ij = j - 1;
 
 	//cout << "laplacian loop" << phiVal(0,0);
 
 	//periodic boundary conditions
 	if (i == 0){
-		below = 0;
+		below_ij = 0;
 	}
 	if (i == N - 1){
-		above = 0;
+		above_ij = 0;
 	}
 	if (j == 0){
-		right = 0;
+		right_ij = 0;
 	}
 	if (j == N - 1){
-		left = 0;
+		left_ij = 0;
 	}
+};
 
-	laplacian_ij = phiVal( above, j) + phiVal( below, j)
-			+ phiVal( i, left ) + phiVal(i, right) 
+
+//evaluates the laplacian for phi(i,j). Eqn B.5 in Nik's book may be used as a more isotropic laplacian
+//for PERIODIC BOUNDARY CONDITIONS - right now doesn't deal with 0 nodes well...
+double Laplacian(int i, int j){
+
+	double laplacian_ij; 
+
+	periodic_BC(i,j);
+
+
+	laplacian_ij = phiVal( above_ij, j) + phiVal( below_ij, j)
+			+ phiVal( i, left_ij ) + phiVal(i, right_ij) 
 			- 4 * ( phiVal(i,j) );
 	//cout << " " << phiVal( above, j) << " " << phiVal(below, j)
 	//		<< " " << phiVal( i, left ) << " " << phiVal(i, right) << " ij is " << i << " " << j << endl;
@@ -117,7 +125,7 @@ double df(int i, int j){
 //only stable for sufficiently small time steps (delta_t)
 double timeMarchA(int i, int j){
 
-	double newPHI = phiVal(i,j) + (dt_bar / pow(dx_bar, 2)) * LaplacianA(i , j)
+	double newPHI = phiVal(i,j) + (dt_bar / pow(dx_bar, 2)) * Laplacian(i , j)
 						- dt_bar * df(i,j);
 
 	//cout << newPHI << " from " << phiVal(i,j) << endl;
@@ -125,6 +133,37 @@ double timeMarchA(int i, int j){
 	return newPHI;
 
 };
+
+
+double Laplacian_mu(int i, int j){
+	double mu_ij, laplacian_phi, laplacian_f; 
+
+	periodic_BC(i,j);
+
+	laplacian_phi = Laplacian(above_ij, j) + Laplacian(below_ij, j)
+			+ Laplacian(i, left_ij ) + Laplacian(i, right_ij) 
+			- 4 * (Laplacian(i,j));
+	
+	laplacian_f = df(above_ij, j) + df(below_ij, j)
+			+ df(i, left_ij) + df(i, right_ij)
+			-4 * (df(i,j));
+
+	mu_ij = - laplacian_phi / ( pow(dx_bar, 2) ) + laplacian_f;
+
+	return mu_ij;
+	
+};
+
+double timeMarchB(int i, int j){
+
+	double newPHI = phiVal(i,j) + (dt_bar / pow(dx_bar,2)) * Laplacian_mu(i,j);
+	
+
+	return newPHI;
+};
+
+
+
 
 
 //be careful not to print this array every time step. it will quickly fill up disk space
@@ -158,11 +197,12 @@ int main(){
 	//restriction means that it is not possible to advance a solution explicity faster than the inherent diffusion
 	//time of the problem.
 	dt = 0.1; 
-	dx = 5;
+	dx = 0.8;
 
 	//assign vaue for N
-	N = 400;
-	T = 100; //make sure T is a multiple of 10 to make timesteps are good.
+	N = 100;
+	T = 10; //make sure T is a multiple of 10 to make timesteps are good.
+	int T_print = 1;
 
 	//other variables
 	W = pow(0.25, 1/2);
@@ -190,13 +230,12 @@ int main(){
 
 	std::default_random_engine de(time(0));
   	std::normal_distribution<double> distribution(0, 0.001); // 0 mean and 0.001 standard deviation
-	srand((unsigned)time(NULL));
+	
 	for (int i = 0; i < N ; i ++){
 		for (int j = 0; j < N; j ++){
-			//phi[i][j] = (double) (i + 1) * (j + 1) ;
-			phi[i][j] = distribution(de);
-
 			
+			phi[i][j] = distribution(de);
+	
 		}
 	}
 	
@@ -204,17 +243,17 @@ int main(){
 	printPHI();
 
 
-	int ith = 10;
+	
 	for(int timestep = 0; timestep < T; timestep++){
 
 		for (int i = 0; i < N; i ++){
 			for (int j = 0; j < N ; j ++){
-				phi[i][j] = timeMarchA(i,j);
+				phi[i][j] = timeMarchB(i,j);
 			}
 		}
 
 		//print phi array for every 10th timestep
-		if( timestep % ith == 0 ){
+		if( timestep % T_print == 0 ){
 			printPHI();
 		}
 
@@ -224,7 +263,7 @@ int main(){
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	//should print parameters and other info to top of the output file.
-	writeConstantsToFile(N, T/ith, dt, dx);
+	writeConstantsToFile(T, N, T/T_print, dt, dx);
 
 	auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
         std::cout << microseconds.count() << "µs\n";
