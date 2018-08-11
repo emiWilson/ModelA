@@ -64,8 +64,11 @@ int BC(int i){
 };
 //gets values in the phi array
 double phiVal(int i, int j){
+
 	ptrPHI = begining_Of_PHI;
+
 	double element = * (ptrPHI + (BC(i) * N) + BC(j));
+	
 	return element;
 
 };
@@ -82,7 +85,6 @@ double df(int i, int j){
 	double a2 = -1;
 	double a4 = 1;
 
-
 	double diff_f = a2 * phiVal(i, j) + a4 * pow( phiVal(i,j) , 3) ; // + higher order terms - EQ 2.38 in book.
 
 	return diff_f;
@@ -95,9 +97,8 @@ double Laplacian_phi(int i, int j){
 
 	double laplacian_ij; 
 
-
-	laplacian_ij = phiVal(i + 1 , j) + phiVal( i - 1, j)
-			+ phiVal( i, i + 1 ) + phiVal(i, i - 1) 
+	laplacian_ij = phiVal(i + 1 , j) + phiVal(i - 1, j)
+			+ phiVal( i, j + 1 ) + phiVal(i, j - 1) 
 			- 4 * ( phiVal(i,j) );
 	
 	return laplacian_ij;
@@ -105,6 +106,7 @@ double Laplacian_phi(int i, int j){
 
 double MU(int i, int j){
 	double mu = - ( W / pow(dx, 2) ) * Laplacian_phi(i,j) + df(i,j);
+	return mu;
 }
 
 double Laplacian_mu(int i, int j){
@@ -175,10 +177,10 @@ int main(){
 	int skipPrint = 10;
 
 	//other variables
-	W = pow(0.25, 1/2);
+	W = 0.25;
 	M = 1; //lookup realistic value for M.
 	dt_bar = dt * M;
-	dx_bar = dx / W;
+	dx_bar = dx / pow(0.25, 1/2);
 
 
 	//start stopwatch
