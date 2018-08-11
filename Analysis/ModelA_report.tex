@@ -1,19 +1,39 @@
 \documentclass{article}
 \usepackage{graphicx}
+\usepackage{amsmath}
 
 \begin{document}
 
-\title{Model A : Simple PFC Model}
+\title{Simple PFC Model}
 \author{Emily Wilson}
 
 \maketitle
-%%Make sure to reference Nik's book
 
-%%At the moment this is just notes, will be a report eventually!
 
-\begin{equation}
-\phi ^ {n + 1} (i,j) 
-\end{equation}
+\section*{Model A}
+Model A systems are systems where the order parameter is not conserved, a common example is the Ising model of a spin system. Throughout the evolution of the system the total number of "up" spins does not need to stay constant. This system can be modelled by the following equations:
+\begin{equation*}
+\phi ^ {n + 1} (i,j) = \phi^n(i,j) + \frac{\Delta\bar{t} }{\Delta \bar{x} ^2} \bar{\Delta}^2 \phi^n{n+1} (i, j)- \Delta \bar{t} \frac{\partial f(\phi ^n (i,j))}{\partial{\phi}} \\
+\end{equation*}
+with $\bar{\Delta}^2$ is the discreet Laplacian which may be given by
+\begin{equation*}
+\bar{\Delta}^2 \phi ^n (i,j) = \phi(i+1, j) + \phi(i-1, j) + \phi(i, j + 1) + \phi(i, j - 1) - 4 \phi(i,j) 
+\end{equation*}
+although there are other ways to represent the discreet Laplacian that in some cases may be better suited. Used periodic boundary conditions.  The free energy functional may be expressed as a function with two minima, $f(\phi^n(i,j)) = a_1 + \frac{a_2}{2} (\phi^n(i,j))^2 + \frac{a_4}{4} (\phi^n(i,j))^4 $ which has the following first order derivative
+\begin{equation*} 
+\frac{\partial{\phi^n(i,j)}}{\partial {\phi}} = a_2 (\phi^n(i,j))^2 + a_4 (\phi^n(i,j))^3
+\end{equation*}\\ \\
+\textbf{Notes on variables:}\\
+$\bullet$ $i, j = 0 .. N$ are indices for the $\phi$ array which represents the phase field of \indent the system. \\
+$\bullet$ $N$ is the size of the array, here the system is assumed to have the same size \indent in $x$ and $y$ directions.\\
+$\bullet$  $n = 0 .. T$ is the time index of the sytem.\\
+$\bullet$  $T$ is the final time of the array.\\
+$\bullet$ $\bar{t} = n M \Delta t$, $M$ is the mobility constant which is analogous (similar ?) to the diffusion coefficient\\ 
+$\bullet$ $\bar{x} = n \frac{\Delta x}{W_{o}}$, $W_{o}$ is the interface width (?)\\
+$\bullet$ $\Delta \bar{t}  <  \frac{1}{4} \Delta \bar{x}$, euler time marching algorithm stability restriction in 2D
+\\
+
+
 
 
 \end{document}
